@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import dns from "dns";
 const __dirname = import.meta.dirname;
 
 dotenv.config();
@@ -18,7 +19,13 @@ app.get("/", (req, res) => {
 });
 
 app.post("/add-url", (req, res) => {
-  res.json({ url: req.body.url, shorthand: 1 });
+  dns.lookup(req.body.url, (err) => {
+    if (err) {
+      res.json({ error: "Invalid URL" });
+      return;
+    }
+    res.json({ url: req.body.url, shorthand: 1 });
+  });
 });
 
 app.listen(PORT);
