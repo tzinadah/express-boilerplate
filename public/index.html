@@ -28,7 +28,7 @@
             "Content-Type":"application/json"
           },
           body: JSON.stringify({url: urlInput.value})
-        }).then((res)=> {res.json()}).then((data) => {console.log(data)});
+        }).then((res)=> res.json()).then((data) => {resultDiv.innerText=JSON.stringify(data)}).catch((err)=>console.error(err));
       })
     </script>
   </body>
