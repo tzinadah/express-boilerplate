@@ -20,8 +20,8 @@ mongoose
 
 const Schema = mongoose.Schema;
 const shortURLSchema = new Schema({
-  _id: Number,
   url: String,
+  shorthand: Number,
 });
 
 const ShortURL = mongoose.model("ShortURL", shortURLSchema);
@@ -43,7 +43,21 @@ app.post("/add-url", (req, res) => {
       res.json({ error: "Invalid URL" });
       return;
     }
-    res.json({ url: req.body.url, shorthand: 1 });
+    ShortURL.findOne()
+      .sort({ shorthand: -1 })
+      .then((last_entry) => {
+        const shortURL = new ShortURL({
+          url: req.body.url,
+          shorthand: last_entry ? last_entry + 1 : 1,
+        });
+        shortURL
+          .save()
+          .then((doc) => {
+            console.log("saved document");
+            res.json({ url: doc.url, shorthand: doc.shorthand });
+          })
+          .catch((err) => console.error(err));
+      });
   });
 });
 
