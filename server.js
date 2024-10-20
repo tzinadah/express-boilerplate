@@ -61,5 +61,17 @@ app.post("/add-url", (req, res) => {
   });
 });
 
+app.get("/shorthands", (req, res) => {
+  ShortURL.find({}, {_id:0, __v:0})
+    .then((shortURLs) => { 
+      res.json(shortURLs)
+    })
+    .catch((err) => console.log(err));
+});
+
+app.get("shorturl/:shorhand", (req, res) => {
+  
+});
+
 app.listen(PORT);
 console.log(`Server is listening to port ${PORT}`);
