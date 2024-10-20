@@ -38,17 +38,28 @@ app.get("/", (req, res) => {
 });
 
 app.post("/add-url", (req, res) => {
-  dns.lookup(req.body.url, (err) => {
-    if (err) {
+  dns.lookup(req.body.url, async (err) => {
+    if (err && !/^https?:\/\//.test(req.body.url)) {
       res.json({ error: "Invalid URL" });
       return;
     }
+
+    if (/^https?:\/\//.test(req.body.url)) {
+      try {
+        await fetch(req.body.url, { method: "HEAD" });
+      } catch (err) {
+        console.log("invalid http url");
+        res.json({ error: "Invalid URL" });
+        return;
+      }
+    }
+
     ShortURL.findOne()
       .sort({ shorthand: -1 })
       .then((last_entry) => {
         const shortURL = new ShortURL({
           url: req.body.url,
-          shorthand: last_entry ? last_entry + 1 : 1,
+          shorthand: last_entry ? last_entry.shorthand + 1 : 1,
         });
         shortURL
           .save()
@@ -62,15 +73,26 @@ app.post("/add-url", (req, res) => {
 });
 
 app.get("/shorthands", (req, res) => {
-  ShortURL.find({}, {_id:0, __v:0})
-    .then((shortURLs) => { 
-      res.json(shortURLs)
+  ShortURL.find({}, { _id: 0, __v: 0 })
+    .then((shortURLs) => {
+      res.json(shortURLs);
     })
     .catch((err) => console.log(err));
 });
 
-app.get("shorturl/:shorhand", (req, res) => {
-  
+app.get("/shorturl/:shorthand", (req, res) => {
+  ShortURL.findOne({ shorthand: Number(req.params.shorthand) })
+    .then((shortURL) => {
+      if (shortURL) {
+        const redirectUrl =
+          !shortURL.url.startsWith("http://") &&
+          !shortURL.url.startsWith("https://")
+            ? "http://" + shortURL.url
+            : shortURL.url;
+        res.redirect(redirectUrl);
+      } else res.send("Shorthand is not defined");
+    })
+    .catch((err) => console.log(err));
 });
 
 app.listen(PORT);
